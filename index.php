@@ -183,7 +183,6 @@
                     array_push($GLOBALS['chamadas'], $chamada);
                 }
                 break;
-
         }//end switch
     }//end function
 
@@ -224,34 +223,41 @@
         $recursos_empenhados = array();
         $recursos_disponiveis = array();
 
-        $sql = "SELECT * FROM tipos_recursos WHERE id = '" . $recurso->idTipoRecurso . "'";
+        foreach ($GLOBALS['recursos'] as $recurso) {
+            $sql = "SELECT * FROM tipos_recursos WHERE id = '" . $recurso->idTipoRecurso . "'";
             $result = $GLOBALS['conn']->query($sql)->fetch(PDO::FETCH_ASSOC);
 
-        if($result['id'] != "") {
-            foreach ($GLOBALS['recursos'] as $recurso) {
+            if($result['id'] != "") {
                 if($recurso->codigoSituacaoRecurso == 'E') {
                     $qtd_recursos_empenhados++;
-                    if($recursos_empenhados[$result['descricao']] == null) {
-                        $recursos_empenhados[$result['descricao']] = 1;
-                    } else {
+                    if(array_key_exists($result['descricao'], $recursos_empenhados)) {
                         $recursos_empenhados[$result['descricao']]++;
+                    } else {
+                        $recursos_empenhados[$result['descricao']] = 1;
                     }
                 } else if($recurso->codigoSituacaoRecurso == 'D') {
                     $qtd_recursos_disponiveis++;
-                    if($recursos_disponiveis[$result['descricao']] == null) {
-                        $recursos_disponiveis[$result['descricao']] = 1;
-                    } else {
+                    if(array_key_exists($result['descricao'], $recursos_disponiveis)) {
                         $recursos_disponiveis[$result['descricao']]++;
+                    } else {
+                        $recursos_disponiveis[$result['descricao']] = 1;
                     }
                 }
             }
         }
-        foreach ($recursos_empenhados as $element) {
-            echo $element;
+        echo "<pre>";
+        echo "Dados das Viaturas: <br>";
+        echo " - " . $qtd_recursos_empenhados . " Viatura(s) Empenhadas<br>";
+        echo " - " . $qtd_recursos_disponiveis . " Viatura(s) Disponíveis<br>";
+        echo "<br>Tipos de Viaturas Empenhadas: <br>";
+        foreach ($recursos_empenhados as $key => $value) {
+            echo " - " . $value . " " . $key . "<br>";
         }
-        foreach ($recursos_disponiveis as $element) {
-            echo $element;
+        echo "<br>Tipos de Viaturas Disponíveis: <br>";
+        foreach ($recursos_disponiveis as $key => $value) {
+            echo " - " . $value . " " . $key . "<br>";
         }
+        echo "</pre>";
     }
 
     function filter_calls() {
@@ -277,10 +283,11 @@
             }
         } //end foreach
         echo "<pre>";
-        echo "Total de ocorrências: " . $total_chamadas . "<br/>"; 
-        echo "Ocorrências atendidas: " . $chamadas_atendidas . "<br/>";
-        echo "Ocorrências aguardando atendimento: " . $chamadas_aguardando . "<br/>";
-        echo "Ocorrências destaque: " . $chamadas_destaque . "<br/>";
+        echo "<br>Dados das Chamadas: <br>";
+        echo " - Total de ocorrências: " . $total_chamadas . "<br/>"; 
+        echo " - Ocorrências sendo atendidas: " . $chamadas_atendidas . "<br/>";
+        echo " - Ocorrências aguardando atendimento: " . $chamadas_aguardando . "<br/>";
+        echo " - Ocorrências destaque: " . $chamadas_destaque . "<br/>";
         echo "</pre>";
     } //end function
 
@@ -348,7 +355,7 @@
     main();
 
     //Exibe o resultado dos recursos formatados no padrao do array
-    echo "<pre>";
-    print_r($GLOBALS['recursos_retorno']);
-    echo "</pre>";
+    // echo "<pre>";
+    // print_r($GLOBALS['recursos_retorno']);
+    // echo "</pre>";
 ?>
