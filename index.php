@@ -1,13 +1,6 @@
+#!/usr/bin/php7.0
+
 <?php 
-
-    class Recurso {
-        public $identificador;
-        public $situacao;
-        public $codigo;
-        public $descricao;
-        public $prefixo;
-    }
-
     function start_db_connection() {
         $servername = "localhost";
         $username = "root";
@@ -52,7 +45,7 @@
         $x_scroll_context = $res_header['X-Scroll-Context']; //salva o scroll_context (se existir) em uma variavel
         if (strpos($res_string, "\r\n\r\n") > 0) {
             //separa o cabeçalho do corpo da requisição
-            list($res_aux, $body) = explode("\r\n\r\n", $res_string); //A funcao LIST armazena a primeira parte em res_aux e a segunda em body. Essas partes sao divididas pela funcao EXPLODE, que divide a resposta em cabecalho e body.
+            list($res_aux, $body) = explode("\r\n\r\n", $res_string); 
 
             //transforma os dados do corpo da resposta do XML para o formato JSON
             $body_xml = simplexml_load_string($body);
@@ -69,10 +62,8 @@
         if($x_scroll_context == '') {
             if($resource_desc == "recursos_ativos") {
                 filter_resources();
-                print_resources();
             } else if($resource_desc == "chamadas_ativas") {
                 filter_calls();
-                print_calls();
             }
             return;
         }
@@ -105,7 +96,8 @@
             case "situacao_recurso":
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $situacao_recurso) {
                     $sql = "INSERT INTO situacoes_recursos (codigo, descricao) 
-                        VALUES ('" . $situacao_recurso->codigo . "', '" . $situacao_recurso->descricao . "')";
+                        VALUES ('" . $situacao_recurso->codigo . "', '" . $situacao_recurso->descricao . "') 
+                        ON DUPLICATE KEY UPDATE descricao='" . $situacao_recurso->descricao . "'";
                     $GLOBALS['conn']->query($sql);
                 }                    
                 break;
@@ -115,7 +107,8 @@
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $tipo_recurso) {
                     if($tipo_recurso->idOrgao == 2) {
                         $sql = "INSERT INTO tipos_recursos (id, descricao, codigo) 
-                            VALUES ('" . $tipo_recurso->id . "', '" . $tipo_recurso->descricao . "', '" . $tipo_recurso->codigo . "')";
+                            VALUES ('" . $tipo_recurso->id . "', '" . $tipo_recurso->descricao . "', '" . $tipo_recurso->codigo . "')
+                            ON DUPLICATE KEY UPDATE descricao='" . $tipo_recurso->descricao . "',codigo='" . $tipo_recurso->codigo . "'";
                         $GLOBALS['conn']->query($sql);
                     }
                 }
@@ -126,7 +119,8 @@
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $unidade_servico) {
                     if($unidade_servico->idOrgao == 2) {
                         $sql = "INSERT INTO unidades_servico (id, descricao, codigo) 
-                            VALUES ('" . $unidade_servico->id . "', '" . $unidade_servico->descricao . "', '" . $unidade_servico->codigo . "')";
+                            VALUES ('" . $unidade_servico->id . "', '" . $unidade_servico->descricao . "', '" . $unidade_servico->codigo . "')
+                            ON DUPLICATE KEY UPDATE descricao='" . $unidade_servico->descricao . "',codigo='" . $unidade_servico->codigo . "'";
                         $GLOBALS['conn']->query($sql);
                     }
                 }
@@ -143,7 +137,8 @@
                 //insere cada unidade de servico dos bombeiros no banco
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $origem_chamada) {
                     $sql = "INSERT INTO origem_chamada (codigo, descricao) 
-                        VALUES ('" . $origem_chamada->codigo . "', '" . $origem_chamada->descricao . "')";
+                        VALUES ('" . $origem_chamada->codigo . "', '" . $origem_chamada->descricao . "')
+                        ON DUPLICATE KEY UPDATE descricao='" . $origem_chamada->descricao . "'";
                     $GLOBALS['conn']->query($sql);
                 }
                 break;
@@ -152,7 +147,8 @@
                 //insere cada unidade de servico dos bombeiros no banco
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $prioridade) {
                     $sql = "INSERT INTO prioridade (codigo, descricao) 
-                        VALUES ('" . $prioridade->codigo . "', '" . $prioridade->descricao . "')";
+                        VALUES ('" . $prioridade->codigo . "', '" . $prioridade->descricao . "')
+                        ON DUPLICATE KEY UPDATE descricao='" . $prioridade->descricao . "'";
                     $GLOBALS['conn']->query($sql);
                 }
                 break;
@@ -161,7 +157,8 @@
                 //insere cada unidade de servico dos bombeiros no banco
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $situacao_atendimento_chamada) {
                     $sql = "INSERT INTO situacao_atendimento_chamada (codigo, descricao) 
-                        VALUES ('" . $situacao_atendimento_chamada->codigo . "', '" . $situacao_atendimento_chamada->descricao . "')";
+                        VALUES ('" . $situacao_atendimento_chamada->codigo . "', '" . $situacao_atendimento_chamada->descricao . "')
+                        ON DUPLICATE KEY UPDATE descricao='" . $situacao_atendimento_chamada->descricao . "'";
                     $GLOBALS['conn']->query($sql);
                 }
                 break;
@@ -170,7 +167,8 @@
                 //insere cada unidade de servico dos bombeiros no banco
                 foreach ($dados_body_json->dadosAuxiliares->dadoAuxiliarV1 as $situacao_chamada) {
                     $sql = "INSERT INTO situacao_chamada (codigo, descricao) 
-                        VALUES ('" . $situacao_chamada->codigo . "', '" . $situacao_chamada->descricao . "')";
+                        VALUES ('" . $situacao_chamada->codigo . "', '" . $situacao_chamada->descricao . "')
+                        ON DUPLICATE KEY UPDATE descricao='" . $situacao_chamada->descricao . "'";
                     $GLOBALS['conn']->query($sql);
                 }
                 break;
@@ -192,54 +190,12 @@
             if($result['id'] != "") {
                 $sql = "INSERT INTO recursos(id, situacao, id_tipo_recurso, prefixo) 
                         VALUES (" . $recurso->id . ",'" . $recurso->codigoSituacaoRecurso . "'," . $recurso->idTipoRecurso . ",'" 
-                        . $recurso->prefixo . "') ON DUPLICATE KEY UPDATE situacao='" . $recurso->codigoSituacaoRecurso . "'";
+                        . $recurso->prefixo . "') ON DUPLICATE KEY UPDATE situacao='" . $recurso->codigoSituacaoRecurso . 
+                        "',ultima_atualizacao=CURRENT_TIMESTAMP";
                 $GLOBALS['conn']->query($sql);
             }         
         } //end foreach         
     } //end function
-
-    function print_resources() {
-        $qtd_recursos_empenhados = 0;
-        $qtd_recursos_disponiveis = 0;
-        $recursos_empenhados = array();
-        $recursos_disponiveis = array();
-
-        foreach ($GLOBALS['recursos'] as $recurso) {
-            $sql = "SELECT * FROM tipos_recursos WHERE id = '" . $recurso->idTipoRecurso . "'";
-            $result = $GLOBALS['conn']->query($sql)->fetch(PDO::FETCH_ASSOC);
-
-            if($result['id'] != "") {
-                if($recurso->codigoSituacaoRecurso == 'E') {
-                    $qtd_recursos_empenhados++;
-                    if(array_key_exists($result['descricao'], $recursos_empenhados)) {
-                        $recursos_empenhados[$result['descricao']]++;
-                    } else {
-                        $recursos_empenhados[$result['descricao']] = 1;
-                    }
-                } else if($recurso->codigoSituacaoRecurso == 'D') {
-                    $qtd_recursos_disponiveis++;
-                    if(array_key_exists($result['descricao'], $recursos_disponiveis)) {
-                        $recursos_disponiveis[$result['descricao']]++;
-                    } else {
-                        $recursos_disponiveis[$result['descricao']] = 1;
-                    }
-                }
-            }
-        }
-        echo "<pre>";
-        echo "Dados das Viaturas: <br>";
-        echo " - " . $qtd_recursos_empenhados . " Viatura(s) Empenhadas<br>";
-        echo " - " . $qtd_recursos_disponiveis . " Viatura(s) Disponíveis<br>";
-        echo "<br>Tipos de Viaturas Empenhadas: <br>";
-        foreach ($recursos_empenhados as $key => $value) {
-            echo " - " . $value . " " . $key . "<br>";
-        }
-        echo "<br>Tipos de Viaturas Disponíveis: <br>";
-        foreach ($recursos_disponiveis as $key => $value) {
-            echo " - " . $value . " " . $key . "<br>";
-        }
-        echo "</pre>";
-    }
 
     function filter_calls() {
         foreach ($GLOBALS['chamadas'] as $chamada) {
@@ -248,79 +204,28 @@
             $destaque = $chamada->dadosVigentesAtendimentosChamada->dadosVigentesAtendimentoChamadaV1->destaque;
             if(!$destaque)
                 $destaque = "false";
-                $sql = "INSERT INTO chamadas(id, cod_situacao_atendimento, destaque) VALUES (" . $id . ",'" . $codigo_situacao_atendimento
-                            . "'," . strtoupper($destaque) . ") ON DUPLICATE KEY UPDATE cod_situacao_atendimento='" . $codigo_situacao_atendimento . "'";
-                $GLOBALS['conn']->query($sql); 
+            $sql = "INSERT INTO chamadas(id, cod_situacao_atendimento, destaque) VALUES (" . $id . ",'" . $codigo_situacao_atendimento
+                        . "'," . strtoupper($destaque) . ") ON DUPLICATE KEY UPDATE cod_situacao_atendimento='" . $codigo_situacao_atendimento . 
+                    "',ultima_atualizacao=CURRENT_TIMESTAMP";   
+            $GLOBALS['conn']->query($sql); 
             // }
         } //end foreach
     } //end function
 
-    function print_calls() {
-        $total_chamadas = 0;
-        $chamadas_atendidas = 0;
-        $chamadas_aguardando = 0;
-        $chamadas_destaque = 0;
-        foreach ($GLOBALS['chamadas'] as $chamada) {
-            $codigo_situacao_atendimento = $chamada->dadosVigentesAtendimentosChamada->dadosVigentesAtendimentoChamadaV1->codigoSituacaoAtendimentoChamada;
-            if($codigo_situacao_atendimento != '') {
-                $total_chamadas++; 
-                if($codigo_situacao_atendimento == 'DP') {
-                    $chamadas_atendidas++;
-                } else {
-                    if($codigo_situacao_atendimento != 'ER' && $codigo_situacao_atendimento != 'EN' && $codigo_situacao_atendimento != 'TR' &&
-                            $codigo_situacao_atendimento != 'SU') {
-                        $chamadas_aguardando++;
-                    }
-                }
-            }
-            if($chamada->dadosVigentesAtendimentosChamada->dadosVigentesAtendimentoChamadaV1->destaque == 'true') {
-                $chamadas_destaque++;
-            }
-        } //end foreach
-        echo "<pre>";
-        echo "<br>Dados das Chamadas: <br>";
-        echo " - Total de ocorrências: " . $total_chamadas . "<br/>"; 
-        echo " - Ocorrências sendo atendidas: " . $chamadas_atendidas . "<br/>";
-        echo " - Ocorrências aguardando atendimento: " . $chamadas_aguardando . "<br/>";
-        echo " - Ocorrências destaque: " . $chamadas_destaque . "<br/>";
-        echo "</pre>";
-    } //end function
-
-
     function update_database() {
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/situacaoRecurso', "situacao_recurso");
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/tipoRecurso', "tipo_recurso");
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/unidadeServico', "unidade_servico"); 
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/origemChamada', "origem_chamada");
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/prioridade', "prioridade");
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/situacaoAtendimentoChamada', "situacao_atendimento_chamada");
+        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/situacaoChamada', "situacao_chamada"); 
+
         $sql = "DELETE FROM versao_dados_auxiliares";
         $GLOBALS['conn']->query($sql);
         $sql = "INSERT INTO versao_dados_auxiliares(id_versao) 
             VALUES('" . $GLOBALS['id_versao'] . "')";
-        $GLOBALS['conn']->query($sql);
-
-        $sql = "DELETE FROM situacoes_recursos";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/situacaoRecurso', "situacao_recurso");
-        
-        $sql = "DELETE FROM tipos_recursos";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/tipoRecurso', "tipo_recurso");
-        
-        $sql = "DELETE FROM unidades_servico";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/unidadeServico', "unidade_servico"); 
-    
-        $sql = "DELETE FROM origem_chamada";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/origemChamada', "origem_chamada");
-        
-        $sql = "DELETE FROM prioridade";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/prioridade', "prioridade");
-        
-        $sql = "DELETE FROM situacao_atendimento_chamada";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/situacaoAtendimentoChamada', "situacao_atendimento_chamada");
-        
-        $sql = "DELETE FROM situacao_chamada";
-        $GLOBALS['conn']->query($sql);
-        request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/' . $GLOBALS['id_versao'] . '/situacaoChamada', "situacao_chamada");       
+        $GLOBALS['conn']->query($sql);      
     }
 
     function main() {
@@ -334,7 +239,7 @@
         request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/dadosAuxiliares/', 'id_versao');
 
         //verifica a versao dos dados e faz a atualizacao do banco, caso necessario
-        if($id_corrente == '' || $id_corrente != '' && $id_corrente < $GLOBALS['id_versao']) {
+        if(!$id_corrente || $id_corrente < $GLOBALS['id_versao']) {
             update_database();
         }
         request_resource('', 'https://treinamento.sids.mg.gov.br/cad/brokerLeitura/recursos/ativos/', 'recursos_ativos');
@@ -346,10 +251,9 @@
     $chamadas = array();
     $con;
     $id_versao;
-
-    main();
-
-    //select recursos.id, recursos.situacao, tipos_recursos.descricao, tipos_recursos.codigo, recursos.prefixo from 
-    //recursos left join tipos_recursos on recursos.id_tipo_recurso = tipos_recursos.id;
+      
+    while(true) { 
+        main();
+        sleep(30);
+    }
 ?>
-
