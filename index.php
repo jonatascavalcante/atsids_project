@@ -2,12 +2,9 @@
 
     class Recurso {
         public $identificador;
-        public $disponibilidade;
+        public $situacao;
         public $codigo;
         public $descricao;
-        public $codigo_unidade_servico;
-        public $descricao_unidade_servico;
-        public $placa_meio_material;
         public $prefixo;
     }
 
@@ -71,10 +68,11 @@
         curl_close($curl);
         if($x_scroll_context == '') {
             if($resource_desc == "recursos_ativos") {
-                // filter_resources();
+                filter_resources();
                 print_resources();
             } else if($resource_desc == "chamadas_ativas") {
                 filter_calls();
+                print_calls();
             }
             return;
         }
@@ -192,28 +190,11 @@
             $result = $GLOBALS['conn']->query($sql)->fetch(PDO::FETCH_ASSOC);
             
             if($result['id'] != "") {
-                $current_resource = new Recurso();
-                $current_resource->identificador = $recurso->id;
-                if($recurso->codigoSituacaoRecurso == 'D') {
-                    $current_resource->disponibilidade = 'disponível';
-                } else if($recurso->codigoSituacaoRecurso == 'E') {
-                    $current_resource->disponibilidade = 'empenhado';
-                } else {
-                    $current_resource->disponibilidade = 'indisponível';
-                }
-                $current_resource->codigo = $result['codigo'];
-                $current_resource->descricao = $result['descricao'];
-                
-                $sql = "SELECT * FROM unidades_servico WHERE id = '" . $recurso->idUnidadeServico . "'";
-                $result = $GLOBALS['conn']->query($sql)->fetch(PDO::FETCH_ASSOC);
-                
-                $current_resource->codigo_unidade_servico = $result['codigo'];
-                $current_resource->descricao_unidade_servico = $result['descricao'];
-                $current_resource->placa_meio_material = $recurso->placaMeioMaterial;
-                $current_resource->prefixo = $recurso->prefixo;
-
-                array_push($GLOBALS['recursos_retorno'], $current_resource);
-            } //end if          
+                $sql = "INSERT INTO recursos(id, situacao, id_tipo_recurso, prefixo) 
+                        VALUES (" . $recurso->id . ",'" . $recurso->codigoSituacaoRecurso . "'," . $recurso->idTipoRecurso . ",'" 
+                        . $recurso->prefixo . "') ON DUPLICATE KEY UPDATE situacao='" . $recurso->codigoSituacaoRecurso . "'";
+                $GLOBALS['conn']->query($sql);
+            }         
         } //end foreach         
     } //end function
 
@@ -261,6 +242,20 @@
     }
 
     function filter_calls() {
+        foreach ($GLOBALS['chamadas'] as $chamada) {
+            $id = $chamada->id;
+            $codigo_situacao_atendimento = $chamada->dadosVigentesAtendimentosChamada->dadosVigentesAtendimentoChamadaV1->codigoSituacaoAtendimentoChamada;
+            $destaque = $chamada->dadosVigentesAtendimentosChamada->dadosVigentesAtendimentoChamadaV1->destaque;
+            if(!$destaque)
+                $destaque = "false";
+                $sql = "INSERT INTO chamadas(id, cod_situacao_atendimento, destaque) VALUES (" . $id . ",'" . $codigo_situacao_atendimento
+                            . "'," . strtoupper($destaque) . ") ON DUPLICATE KEY UPDATE cod_situacao_atendimento='" . $codigo_situacao_atendimento . "'";
+                $GLOBALS['conn']->query($sql); 
+            // }
+        } //end foreach
+    } //end function
+
+    function print_calls() {
         $total_chamadas = 0;
         $chamadas_atendidas = 0;
         $chamadas_aguardando = 0;
@@ -290,6 +285,7 @@
         echo " - Ocorrências destaque: " . $chamadas_destaque . "<br/>";
         echo "</pre>";
     } //end function
+
 
     function update_database() {
         $sql = "DELETE FROM versao_dados_auxiliares";
@@ -347,15 +343,13 @@
 
     //global variables
     $recursos = array();
-    $recursos_retorno = array();
     $chamadas = array();
     $con;
     $id_versao;
 
     main();
 
-    //Exibe o resultado dos recursos formatados no padrao do array
-    // echo "<pre>";
-    // print_r($GLOBALS['recursos_retorno']);
-    // echo "</pre>";
+    //select recursos.id, recursos.situacao, tipos_recursos.descricao, tipos_recursos.codigo, recursos.prefixo from 
+    //recursos left join tipos_recursos on recursos.id_tipo_recurso = tipos_recursos.id;
 ?>
+
